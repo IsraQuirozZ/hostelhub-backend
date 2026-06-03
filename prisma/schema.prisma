@@ -1,0 +1,328 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Usuario {
+  id_usuario       Int      @id @default(autoincrement())
+  nombre           String
+  fecha_nacimiento DateTime?
+  sobre_mi         String?
+  email            String   @unique
+  password         String
+  nacionalidad     String?
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+
+  // Relaciones
+  idiomas          UsuarioIdioma[]
+  reservas         Reserva[]
+  posts            Post[]
+  ratings          RatingPost[]
+  comentarios      Comentario[]
+  chats            UsuarioChat[]
+  paises_visitados UsuarioPaises[]
+
+  @@map("usuarios")
+}
+
+model Idioma {
+  codigo_iso String @id
+  nombre     String
+
+  usuarios   UsuarioIdioma[]
+
+  @@map("idiomas")
+}
+
+model UsuarioIdioma {
+  id_usuario Int
+  codigo_iso String
+  nivel      String
+
+  usuario    Usuario @relation(fields: [id_usuario], references: [id_usuario])
+  idioma     Idioma  @relation(fields: [codigo_iso], references: [codigo_iso])
+
+  @@id([id_usuario, codigo_iso])
+  @@map("usuario_idioma")
+}
+
+model Pais {
+  codigo_pais String  @id
+  nombre      String
+
+  ciudades    Ciudad[]
+  usuarios    UsuarioPaises[]
+
+  @@map("paises")
+}
+
+model Ciudad {
+  id_ciudad   Int    @id @default(autoincrement())
+  codigo_pais String
+  nombre      String
+
+  pais        Pais   @relation(fields: [codigo_pais], references: [codigo_pais])
+  posts       Post[]
+  chats       Chat[]
+  hostales    Hostal[]  // 👈 añade esto
+
+  @@map("ciudades")
+}
+
+model UsuarioPaises {
+  id_usuario  Int
+  codigo_pais String
+  visitas     Int     @default(0)
+
+  usuario     Usuario @relation(fields: [id_usuario], references: [id_usuario])
+  pais        Pais    @relation(fields: [codigo_pais], references: [codigo_pais])
+
+  @@id([id_usuario, codigo_pais])
+  @@map("usuario_paises")
+}
+
+// ─── RESERVAS ───────────────────────────────────────────
+
+model Reserva {
+  id_reserva    Int      @id @default(autoincrement())
+  id_usuario    Int
+  fecha_inicio  DateTime
+  fecha_fin     DateTime
+  fecha_reserva DateTime @default(now())
+  estado        String   @default("pendiente") // pendiente | confirmada | cancelada
+  num_personas  Int
+  total         Decimal  @db.Decimal(10, 2)
+
+  usuario       Usuario  @relation(fields: [id_usuario], references: [id_usuario])
+  facturas      Factura[]
+  habitaciones  ReservaHabitacion[]
+
+  @@map("reservas")
+}
+
+model Factura {
+  id_factura    Int      @id @default(autoincrement())
+  id_reserva    Int
+  estado        String
+  subtotal      Decimal  @db.Decimal(10, 2)
+  impuestos     Decimal  @db.Decimal(10, 2)
+  fecha_emision DateTime @default(now())
+  total         Decimal  @db.Decimal(10, 2)
+
+  reserva       Reserva  @relation(fields: [id_reserva], references: [id_reserva])
+  pagos         Pago[]
+
+  @@map("facturas")
+}
+
+model Pago {
+  id_pago     Int      @id @default(autoincrement())
+  id_factura  Int
+  estado      String
+  monto       Decimal  @db.Decimal(10, 2)
+  tipo_pago   String
+  metodo_pago String
+  fecha_pago  DateTime @default(now())
+
+  factura     Factura  @relation(fields: [id_factura], references: [id_factura])
+
+  @@map("pagos")
+}
+
+// ─── HOSTALES ───────────────────────────────────────────
+
+model Direccion {
+  id_direccion  Int     @id @default(autoincrement())
+  calle         String
+  codigo_postal String
+  numero        String
+
+  hostales      Hostal[]
+
+  @@map("direcciones")
+}
+
+model Hostal {
+  id_hostal     Int      @id @default(autoincrement())
+  id_direccion  Int
+  id_ciudad     Int
+  nombre        String
+  descripcion   String?
+  telefono      String?
+  disponibilidad Boolean @default(true)
+  capacidad     Int
+  email         String?
+
+  direccion     Direccion  @relation(fields: [id_direccion], references: [id_direccion])
+  ciudad        Ciudad     @relation(fields: [id_ciudad], references: [id_ciudad])
+  habitaciones  Habitacion[]
+  fotos         HostalFoto[]
+  servicios     HostalServicio[]
+  chats         Chat[]
+
+  @@map("hostales")
+}
+
+model Habitacion {
+  id_habitacion Int     @id @default(autoincrement())
+  id_hostal     Int
+  tipo          String
+  descripcion   String?
+  disponibilidad Boolean @default(true)
+  capacidad     Int
+
+  hostal        Hostal  @relation(fields: [id_hostal], references: [id_hostal])
+  reservas      ReservaHabitacion[]
+
+  @@map("habitaciones")
+}
+
+model ReservaHabitacion {
+  id_reserva    Int
+  id_habitacion Int
+  precio_noche  Decimal @db.Decimal(10, 2)
+
+  reserva       Reserva    @relation(fields: [id_reserva], references: [id_reserva])
+  habitacion    Habitacion @relation(fields: [id_habitacion], references: [id_habitacion])
+
+  @@id([id_reserva, id_habitacion])
+  @@map("reserva_habitacion")
+}
+
+model Foto {
+  id_foto     Int    @id @default(autoincrement())
+  ruta        String
+  descripcion String?
+
+  hostales    HostalFoto[]
+
+  @@map("fotos")
+}
+
+model HostalFoto {
+  id_foto    Int
+  id_hostal  Int
+  es_principal Boolean @default(false)
+
+  foto       Foto   @relation(fields: [id_foto], references: [id_foto])
+  hostal     Hostal @relation(fields: [id_hostal], references: [id_hostal])
+
+  @@id([id_foto, id_hostal])
+  @@map("hostal_foto")
+}
+
+model Servicio {
+  id_servicio Int    @id @default(autoincrement())
+  nombre      String
+  icono       String?
+
+  hostales    HostalServicio[]
+
+  @@map("servicios")
+}
+
+model HostalServicio {
+  id_hostal       Int
+  id_servicio     Int
+  costo_adicional Decimal? @db.Decimal(10, 2)
+
+  hostal          Hostal   @relation(fields: [id_hostal], references: [id_hostal])
+  servicio        Servicio @relation(fields: [id_servicio], references: [id_servicio])
+
+  @@id([id_hostal, id_servicio])
+  @@map("hostal_servicio")
+}
+
+// ─── POSTS & SOCIAL ─────────────────────────────────────
+
+model Post {
+  id_post          Int      @id @default(autoincrement())
+  id_ciudad        Int
+  id_usuario       Int
+  titulo           String
+  contenido        String
+  fecha_publicacion DateTime @default(now())
+  promedio_rating  Float?   @default(0)
+  estado           String   @default("activo") // activo | inactivo | reportado
+  nombre_lugar     String?
+
+  ciudad           Ciudad      @relation(fields: [id_ciudad], references: [id_ciudad])
+  usuario          Usuario     @relation(fields: [id_usuario], references: [id_usuario])
+  ratings          RatingPost[]
+  comentarios      Comentario[]
+
+  @@map("posts")
+}
+
+model RatingPost {
+  id_post         Int
+  id_usuario      Int
+  fecha_valoracion DateTime @default(now())
+  puntuacion      Int
+
+  post            Post    @relation(fields: [id_post], references: [id_post])
+  usuario         Usuario @relation(fields: [id_usuario], references: [id_usuario])
+
+  @@id([id_post, id_usuario])
+  @@map("rating_post")
+}
+
+model Comentario {
+  id_comentario   Int      @id @default(autoincrement())
+  id_post         Int
+  id_usuario      Int
+  contenido       String
+  fecha_comentario DateTime @default(now())
+
+  post            Post    @relation(fields: [id_post], references: [id_post])
+  usuario         Usuario @relation(fields: [id_usuario], references: [id_usuario])
+
+  @@map("comentarios")
+}
+
+// ─── CHAT ───────────────────────────────────────────────
+
+model Chat {
+  id_chat       Int      @id @default(autoincrement())
+  id_hostal     Int?
+  id_ciudad     Int?
+  fecha_creacion DateTime @default(now())
+  tipo_chat     String   // hostal | ciudad | grupo
+
+  hostal        Hostal?  @relation(fields: [id_hostal], references: [id_hostal])
+  ciudad        Ciudad?  @relation(fields: [id_ciudad], references: [id_ciudad])
+  mensajes      Mensaje[]
+  usuarios      UsuarioChat[]
+
+  @@map("chats")
+}
+
+model Mensaje {
+  id_mensaje  Int      @id @default(autoincrement())
+  id_chat     Int
+  fecha_envio DateTime @default(now())
+  contenido   String
+
+  chat        Chat     @relation(fields: [id_chat], references: [id_chat])
+
+  @@map("mensajes")
+}
+
+model UsuarioChat {
+  id_usuario           Int
+  id_chat              Int
+  fecha_union          DateTime @default(now())
+  recibir_notificacion Boolean  @default(true)
+
+  usuario              Usuario @relation(fields: [id_usuario], references: [id_usuario])
+  chat                 Chat    @relation(fields: [id_chat], references: [id_chat])
+
+  @@id([id_usuario, id_chat])
+  @@map("usuario_chat")
+}
