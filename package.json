@@ -18,7 +18,10 @@
   "main": "index.js",
   "scripts": {
     "dev": "nodemon src/server.js",
-    "start": "node src/server.js"
+    "start": "node src/server.js",
+    "seed": "node scripts/seed.js",
+    "update-ratings": "node scripts/updateRatings.js",
+    "seed-posts": "node scripts/seedPosts.js"
   },
   "repository": {
     "type": "git",

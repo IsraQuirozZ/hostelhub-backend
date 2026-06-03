@@ -13,6 +13,18 @@ const getAllPosts = async () => {
   });
 };
 
+const getPostsByCityId = async (id_ciudad) => {
+  return await prisma.post.findMany({
+    where: { estado: "activo", id_ciudad },
+    include: {
+      usuario: { select: { id_usuario: true, nombre: true } },
+      ciudad: { select: { id_ciudad: true, nombre: true } },
+      _count: { select: { comentarios: true, ratings: true } },
+    },
+    orderBy: { fecha_publicacion: "desc" },
+  });
+};
+
 const getPostById = async (id) => {
   const post = await prisma.post.findUnique({
     where: { id_post: id },
@@ -64,6 +76,7 @@ const deletePost = async (id_post, id_usuario) => {
 
 module.exports = {
   getAllPosts,
+  getPostsByCityId,
   getPostById,
   createPost,
   updatePost,

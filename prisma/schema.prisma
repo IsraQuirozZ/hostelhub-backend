@@ -158,6 +158,7 @@ model Hostal {
   disponibilidad Boolean @default(true)
   capacidad     Int
   email         String?
+  promedio_rating Float @default(0)
 
   direccion     Direccion  @relation(fields: [id_direccion], references: [id_direccion])
   ciudad        Ciudad     @relation(fields: [id_ciudad], references: [id_ciudad])
@@ -251,6 +252,7 @@ model Post {
   promedio_rating  Float?   @default(0)
   estado           String   @default("activo") // activo | inactivo | reportado
   nombre_lugar     String?
+  foto_url         String?
 
   ciudad           Ciudad      @relation(fields: [id_ciudad], references: [id_ciudad])
   usuario          Usuario     @relation(fields: [id_usuario], references: [id_usuario])

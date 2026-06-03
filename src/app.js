@@ -13,6 +13,7 @@ app.use(express.json());
 app.use("/api/auth", require("./routes/auth.routes"));
 app.use("/api/users", require("./routes/user.routes"));
 app.use("/api/posts", require("./routes/post.routes"));
+app.use("/api/hostels", require("./routes/hostal.routes"));
 
 // Health check
 app.get("/api/health", (req, res) => {

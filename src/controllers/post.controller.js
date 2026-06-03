@@ -9,6 +9,17 @@ const getAllPosts = async (req, res, next) => {
   }
 };
 
+const getPostsByCityId = async (req, res, next) => {
+  try {
+    const posts = await postService.getPostsByCityId(
+      Number(req.params.id_ciudad),
+    );
+    res.json({ status: "success", data: posts });
+  } catch (err) {
+    next(err);
+  }
+};
+
 const getPostById = async (req, res, next) => {
   try {
     const post = await postService.getPostById(Number(req.params.id));
@@ -51,6 +62,7 @@ const deletePost = async (req, res, next) => {
 
 module.exports = {
   getAllPosts,
+  getPostsByCityId,
   getPostById,
   createPost,
   updatePost,

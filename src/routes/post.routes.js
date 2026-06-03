@@ -5,6 +5,7 @@ const {
   createPost,
   updatePost,
   deletePost,
+  getPostsByCityId,
 } = require("../controllers/post.controller");
 const authMiddleware = require("../middlewares/auth.middleware");
 const validateFields = require("../middlewares/validateFields");
@@ -15,6 +16,7 @@ const {
 
 // Públicas
 router.get("/", getAllPosts);
+router.get("/city/:id_ciudad", getPostsByCityId);
 router.get("/:id", getPostById);
 
 // Privadas
