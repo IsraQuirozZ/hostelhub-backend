@@ -73,7 +73,15 @@ const getHostalById = async (id) => {
       capacidad: true,
       promedio_rating: true,
       ciudad: { select: { id_ciudad: true, nombre: true } },
-      direccion: { select: { calle: true, numero: true, codigo_postal: true } },
+      direccion: {
+        select: {
+          calle: true,
+          numero: true,
+          codigo_postal: true,
+          latitud: true,
+          longitud: true,
+        },
+      },
       servicios: {
         select: {
           servicio: {
