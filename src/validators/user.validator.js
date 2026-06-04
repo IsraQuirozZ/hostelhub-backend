@@ -7,4 +7,14 @@ const updateUserSchema = z.object({
   fecha_nacimiento: z.string().optional(),
 });
 
-module.exports = { updateUserSchema };
+const updatePasswordSchema = z.object({
+  currentPassword: z.string().min(1),
+  newPassword: z.string().min(6),
+});
+
+const addLanguageSchema = z.object({
+  codigo_iso: z.string().min(2).max(3),
+  nivel: z.enum(["basico", "intermedio", "avanzado", "nativo"]),
+});
+
+module.exports = { updateUserSchema, updatePasswordSchema, addLanguageSchema };
