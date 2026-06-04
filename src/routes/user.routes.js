@@ -8,7 +8,7 @@ const authMiddleware = require("../middlewares/auth.middleware");
 const validateFields = require("../middlewares/validateFields");
 const { updateUserSchema } = require("../validators/user.validator");
 
-router.use(authMiddleware); // todas las rutas de usuario requieren auth
+router.use(authMiddleware);
 
 router.get("/me", getProfile);
 router.put("/me", validateFields(updateUserSchema), updateProfile);

@@ -43,6 +43,23 @@ const getPostById = async (id) => {
   return post;
 };
 
+const getMyPosts = async (id_usuario) => {
+  return await prisma.post.findMany({
+    where: { id_usuario, estado: "activo" },
+    select: {
+      id_post: true,
+      titulo: true,
+      contenido: true,
+      foto_url: true,
+      promedio_rating: true,
+      nombre_lugar: true,
+      fecha_publicacion: true,
+      ciudad: { select: { id_ciudad: true, nombre: true } },
+    },
+    orderBy: { fecha_publicacion: "desc" },
+  });
+};
+
 const createPost = async (id_usuario, data) => {
   return await prisma.post.create({
     data: {
@@ -78,6 +95,7 @@ module.exports = {
   getAllPosts,
   getPostsByCityId,
   getPostById,
+  getMyPosts,
   createPost,
   updatePost,
   deletePost,

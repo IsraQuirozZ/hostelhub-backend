@@ -12,11 +12,27 @@ const getProfile = async (id) => {
       nacionalidad: true,
       fecha_nacimiento: true,
       created_at: true,
+      _count: {
+        select: {
+          paises_visitados: true,
+        },
+      },
     },
   });
 
   if (!usuario) throw new AppError("Usuario no encontrado", 404);
-  return usuario;
+
+  const reservasConfirmadas = await prisma.reserva.count({
+    where: { id_usuario: id, estado: "confirmada" },
+  });
+
+  return {
+    ...usuario,
+    _count: {
+      paises_visitados: usuario._count.paises_visitados,
+      reservas_confirmadas: reservasConfirmadas,
+    },
+  };
 };
 
 const updateProfile = async (id, data) => {
