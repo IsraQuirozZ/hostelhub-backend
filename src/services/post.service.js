@@ -1,6 +1,14 @@
 const prisma = require("../config/prisma");
 const AppError = require("../utils/AppError");
 
+const normalizarCiudad = (nombre) => {
+  return nombre
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // quita acentos
+    .trim();
+};
+
 const getAllPosts = async () => {
   return await prisma.post.findMany({
     where: { estado: "activo" },
@@ -61,9 +69,56 @@ const getMyPosts = async (id_usuario) => {
 };
 
 const createPost = async (id_usuario, data) => {
+  let id_ciudad = data.id_ciudad;
+
+  if (!id_ciudad && !data.nombre_ciudad) {
+    throw new AppError("Debes proporcionar id_ciudad o nombre_ciudad", 400);
+  }
+
+  if (data.nombre_ciudad) {
+    const nombreNormalizado = normalizarCiudad(data.nombre_ciudad);
+
+    // Buscar todas las ciudades y comparar normalizado
+    const ciudades = await prisma.ciudad.findMany({
+      select: { id_ciudad: true, nombre: true },
+    });
+
+    const existente = ciudades.find(
+      (c) => normalizarCiudad(c.nombre) === nombreNormalizado,
+    );
+
+    if (existente) {
+      id_ciudad = existente.id_ciudad;
+    } else {
+      // Crear ciudad nueva bajo país genérico "XX"
+      await prisma.pais.upsert({
+        where: { codigo_pais: "XX" },
+        update: {},
+        create: { codigo_pais: "XX", nombre: "Otro" },
+      });
+
+      const nuevaCiudad = await prisma.ciudad.create({
+        data: {
+          nombre: data.nombre_ciudad.trim(),
+          codigo_pais: "XX",
+        },
+      });
+      id_ciudad = nuevaCiudad.id_ciudad;
+    }
+  }
+
+  // Verificar que la ciudad existe si se pasó id_ciudad directamente
+  if (data.id_ciudad) {
+    const ciudad = await prisma.ciudad.findUnique({ where: { id_ciudad } });
+    if (!ciudad) throw new AppError("Ciudad no encontrada", 404);
+  }
+
+  const { nombre_ciudad, ...rest } = data;
+
   return await prisma.post.create({
     data: {
-      ...data,
+      ...rest,
+      id_ciudad,
       id_usuario,
     },
   });
