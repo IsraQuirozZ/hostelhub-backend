@@ -1,11 +1,12 @@
 const router = require("express").Router();
 const {
   getAllPosts,
+  getPostsByCityId,
   getPostById,
+  getMyPosts,
   createPost,
   updatePost,
   deletePost,
-  getPostsByCityId,
 } = require("../controllers/post.controller");
 const authMiddleware = require("../middlewares/auth.middleware");
 const validateFields = require("../middlewares/validateFields");
@@ -14,12 +15,10 @@ const {
   updatePostSchema,
 } = require("../validators/post.validator");
 
-// Públicas
 router.get("/", getAllPosts);
+router.get("/me", authMiddleware, getMyPosts);
 router.get("/city/:id_ciudad", getPostsByCityId);
 router.get("/:id", getPostById);
-
-// Privadas
 router.post("/", authMiddleware, validateFields(createPostSchema), createPost);
 router.put(
   "/:id",
