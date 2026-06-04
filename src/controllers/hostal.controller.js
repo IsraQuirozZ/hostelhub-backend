@@ -28,4 +28,13 @@ const getTopHostals = async (req, res, next) => {
   }
 };
 
-module.exports = { getCities, getHostals, getTopHostals };
+const getHostalById = async (req, res, next) => {
+  try {
+    const hostal = await hostalService.getHostalById(Number(req.params.id));
+    res.json({ status: "success", data: hostal });
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = { getCities, getHostals, getTopHostals, getHostalById };

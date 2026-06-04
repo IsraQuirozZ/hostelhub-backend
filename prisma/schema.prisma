@@ -27,6 +27,7 @@ model Usuario {
   comentarios      Comentario[]
   chats            UsuarioChat[]
   paises_visitados UsuarioPaises[]
+  ratings_hostales RatingHostal[]
 
   @@map("usuarios")
 }
@@ -167,8 +168,23 @@ model Hostal {
   fotos         HostalFoto[]
   servicios     HostalServicio[]
   chats         Chat[]
+  ratings       RatingHostal[]
 
   @@map("hostales")
+}
+
+model RatingHostal {
+  id_hostal        Int
+  id_usuario       Int
+  puntuacion       Int
+  contenido        String?
+  fecha_valoracion DateTime @default(now())
+
+  hostal           Hostal   @relation(fields: [id_hostal], references: [id_hostal])
+  usuario          Usuario  @relation(fields: [id_usuario], references: [id_usuario])
+
+  @@id([id_hostal, id_usuario])
+  @@map("rating_hostal")
 }
 
 model Habitacion {
