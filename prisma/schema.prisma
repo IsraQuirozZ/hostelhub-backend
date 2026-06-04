@@ -144,6 +144,8 @@ model Direccion {
   calle         String
   codigo_postal String
   numero        String
+  latitud       Float?
+  longitud      Float?
 
   hostales      Hostal[]
 
