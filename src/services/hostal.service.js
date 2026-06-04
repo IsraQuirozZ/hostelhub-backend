@@ -37,7 +37,7 @@ const getHostals = async ({ search, city } = {}) => {
         },
       },
       habitaciones: {
-        select: { precio_base: true },
+        select: { id_habitacion: true, precio_base: true },
         orderBy: { precio_base: "asc" },
         take: 1,
       },
