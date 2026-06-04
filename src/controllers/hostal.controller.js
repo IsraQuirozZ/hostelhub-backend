@@ -11,8 +11,8 @@ const getCities = async (req, res, next) => {
 
 const getHostals = async (req, res, next) => {
   try {
-    const { search } = req.query;
-    const hostals = await hostalService.getHostals(search);
+    const { search, city } = req.query;
+    const hostals = await hostalService.getHostals({ search, city });
     res.json({ status: "success", data: hostals });
   } catch (err) {
     next(err);

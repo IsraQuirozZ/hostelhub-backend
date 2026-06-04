@@ -3,13 +3,25 @@ const prisma = require("../src/config/prisma");
 async function main() {
   console.log("🌱 Creando posts de prueba...");
 
-  // Asumimos que tienes al menos un usuario con id 1
-  // y ciudades del 1 al 5
+  const user = await prisma.usuario.findFirst({
+    select: { id_usuario: true },
+    orderBy: { id_usuario: "asc" },
+  });
+
+  if (!user) {
+    throw new Error(
+      "No hay usuarios para asociar posts. Crea un usuario antes de seed-posts.",
+    );
+  }
+
+  const cities = await prisma.ciudad.findMany({
+    select: { id_ciudad: true, nombre: true },
+  });
+  const cityIdByName = new Map(cities.map((c) => [c.nombre, c.id_ciudad]));
 
   const posts = [
     {
-      id_usuario: 1,
-      id_ciudad: 1,
+      cityName: "Madrid",
       titulo: "Madrid en 3 días",
       contenido:
         "Madrid es una ciudad que nunca duerme. El Retiro, el Prado, la Gran Vía... imposible aburrirse. Os recomiendo perderos por Malasaña por las noches.",
@@ -18,8 +30,7 @@ async function main() {
         "https://images.unsplash.com/photo-1539037116277-4db20889f2d4?w=800",
     },
     {
-      id_usuario: 1,
-      id_ciudad: 2,
+      cityName: "Barcelona",
       titulo: "Barcelona: más que Gaudí",
       contenido:
         "Todo el mundo viene a ver la Sagrada Familia pero Barcelona tiene mucho más. El barrio de Gràcia, el mercado de Santa Caterina, la playa de la Barceloneta...",
@@ -28,8 +39,7 @@ async function main() {
         "https://images.unsplash.com/photo-1583422409516-2895a77efded?w=800",
     },
     {
-      id_usuario: 1,
-      id_ciudad: 3,
+      cityName: "Paris",
       titulo: "París con poco presupuesto",
       contenido:
         "París no tiene por qué ser caro. Los museos nacionales son gratuitos el primer domingo de mes, los picnics en el Sena son una delicia y el metro te lleva a todos lados.",
@@ -38,8 +48,7 @@ async function main() {
         "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=800",
     },
     {
-      id_usuario: 1,
-      id_ciudad: 4,
+      cityName: "Londres",
       titulo: "Londres: consejos que nadie te cuenta",
       contenido:
         "Los museos de Londres son gratuitos, algo que mucha gente no sabe. El British Museum, la National Gallery, el Natural History Museum... días enteros de plan sin gastar nada.",
@@ -47,8 +56,7 @@ async function main() {
       foto_url: null,
     },
     {
-      id_usuario: 1,
-      id_ciudad: 5,
+      cityName: "Roma",
       titulo: "Roma en moto de agua",
       contenido:
         "La mejor forma de ver Roma es alquilar una Vespa y perderte por sus calles. Evita el Coliseo a mediodía y ve temprano, la diferencia es brutal.",
@@ -57,8 +65,7 @@ async function main() {
         "https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=800",
     },
     {
-      id_usuario: 1,
-      id_ciudad: 1,
+      cityName: "Madrid",
       titulo: "El mejor barrio para alojarse en Madrid",
       contenido:
         "Después de probar varios barrios me quedo con Lavapiés. Diverso, auténtico, lleno de bares de tapas y muy bien comunicado. Los hosteles aquí son también más baratos.",
@@ -66,8 +73,7 @@ async function main() {
       foto_url: null,
     },
     {
-      id_usuario: 1,
-      id_ciudad: 2,
+      cityName: "Barcelona",
       titulo: "Tapas y pintxos en Barcelona",
       contenido:
         "El Born es el barrio perfecto para comer bien sin arruinarse. Los pintxos del mercado de Santa Caterina son impresionantes y la zona tiene una energía increíble.",
@@ -78,7 +84,21 @@ async function main() {
   ];
 
   for (const post of posts) {
-    await prisma.post.create({ data: post });
+    const cityId = cityIdByName.get(post.cityName);
+    if (!cityId) {
+      throw new Error(
+        `No existe la ciudad '${post.cityName}' para crear posts`,
+      );
+    }
+
+    const { cityName, ...rest } = post;
+    await prisma.post.create({
+      data: {
+        ...rest,
+        id_usuario: user.id_usuario,
+        id_ciudad: cityId,
+      },
+    });
   }
 
   console.log(`✅ ${posts.length} posts creados`);

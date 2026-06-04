@@ -21,7 +21,8 @@
     "start": "node src/server.js",
     "seed": "node scripts/seed.js",
     "update-ratings": "node scripts/updateRatings.js",
-    "seed-posts": "node scripts/seedPosts.js"
+    "seed-posts": "node scripts/seedPosts.js",
+    "seed-services": "node scripts/seedServices.js"
   },
   "repository": {
     "type": "git",

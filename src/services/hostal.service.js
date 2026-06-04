@@ -7,24 +7,39 @@ const getCities = async () => {
   });
 };
 
-const getHostals = async (search) => {
+const getHostals = async ({ search, city } = {}) => {
+  const where = {};
+
+  if (city) {
+    where.ciudad = { nombre: { equals: city, mode: "insensitive" } };
+  } else if (search) {
+    where.OR = [
+      { nombre: { contains: search, mode: "insensitive" } },
+      { ciudad: { nombre: { contains: search, mode: "insensitive" } } },
+    ];
+  }
+
   return await prisma.hostal.findMany({
-    where: search
-      ? {
-          OR: [
-            { nombre: { contains: search, mode: "insensitive" } },
-            { ciudad: { nombre: { contains: search, mode: "insensitive" } } },
-          ],
-        }
-      : undefined,
+    where,
     select: {
       id_hostal: true,
       nombre: true,
       descripcion: true,
       disponibilidad: true,
-      capacidad: true,
       promedio_rating: true,
       ciudad: { select: { id_ciudad: true, nombre: true } },
+      servicios: {
+        select: {
+          servicio: {
+            select: { id_servicio: true, nombre: true, icono: true },
+          },
+        },
+      },
+      habitaciones: {
+        select: { precio_base: true },
+        orderBy: { precio_base: "asc" },
+        take: 1,
+      },
     },
     orderBy: { nombre: "asc" },
   });

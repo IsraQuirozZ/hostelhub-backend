@@ -117,6 +117,7 @@ CREATE TABLE "hostales" (
     "disponibilidad" BOOLEAN NOT NULL DEFAULT true,
     "capacidad" INTEGER NOT NULL,
     "email" TEXT,
+    "promedio_rating" DOUBLE PRECISION NOT NULL DEFAULT 0,
 
     CONSTRAINT "hostales_pkey" PRIMARY KEY ("id_hostal")
 );
@@ -129,6 +130,7 @@ CREATE TABLE "habitaciones" (
     "descripcion" TEXT,
     "disponibilidad" BOOLEAN NOT NULL DEFAULT true,
     "capacidad" INTEGER NOT NULL,
+    "precio_base" DECIMAL(10,2) NOT NULL DEFAULT 0,
 
     CONSTRAINT "habitaciones_pkey" PRIMARY KEY ("id_habitacion")
 );
@@ -189,6 +191,7 @@ CREATE TABLE "posts" (
     "promedio_rating" DOUBLE PRECISION DEFAULT 0,
     "estado" TEXT NOT NULL DEFAULT 'activo',
     "nombre_lugar" TEXT,
+    "foto_url" TEXT,
 
     CONSTRAINT "posts_pkey" PRIMARY KEY ("id_post")
 );
