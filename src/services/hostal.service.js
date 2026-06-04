@@ -1,4 +1,5 @@
 const prisma = require("../config/prisma");
+const AppError = require("../utils/AppError");
 
 const getCities = async () => {
   return await prisma.ciudad.findMany({
@@ -61,4 +62,50 @@ const getTopHostals = async () => {
   });
 };
 
-module.exports = { getCities, getHostals, getTopHostals };
+const getHostalById = async (id) => {
+  const hostal = await prisma.hostal.findUnique({
+    where: { id_hostal: id },
+    select: {
+      id_hostal: true,
+      nombre: true,
+      descripcion: true,
+      disponibilidad: true,
+      capacidad: true,
+      promedio_rating: true,
+      ciudad: { select: { id_ciudad: true, nombre: true } },
+      direccion: { select: { calle: true, numero: true, codigo_postal: true } },
+      servicios: {
+        select: {
+          servicio: {
+            select: { id_servicio: true, nombre: true, icono: true },
+          },
+        },
+      },
+      habitaciones: {
+        select: {
+          id_habitacion: true,
+          tipo: true,
+          descripcion: true,
+          disponibilidad: true,
+          capacidad: true,
+          precio_base: true,
+        },
+        orderBy: { precio_base: "asc" },
+      },
+      ratings: {
+        select: {
+          puntuacion: true,
+          contenido: true,
+          fecha_valoracion: true,
+          usuario: { select: { nombre: true, nacionalidad: true } },
+        },
+        orderBy: { fecha_valoracion: "desc" },
+      },
+    },
+  });
+
+  if (!hostal) throw new AppError("Hostal no encontrado", 404);
+  return hostal;
+};
+
+module.exports = { getCities, getHostals, getTopHostals, getHostalById };

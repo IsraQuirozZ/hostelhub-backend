@@ -22,7 +22,8 @@
     "seed": "node scripts/seed.js",
     "update-ratings": "node scripts/updateRatings.js",
     "seed-posts": "node scripts/seedPosts.js",
-    "seed-services": "node scripts/seedServices.js"
+    "seed-services": "node scripts/seedServices.js",
+    "seed-ratings": "node scripts/seedRatings.js"
   },
   "repository": {
     "type": "git",
