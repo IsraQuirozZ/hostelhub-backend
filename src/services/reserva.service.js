@@ -1,6 +1,58 @@
 const prisma = require("../config/prisma");
 const AppError = require("../utils/AppError");
+const { unirseAChatsDeReserva } = require("./chat.service");
 
+// Helpers
+const marcarCompletadas = async (id_usuario) => {
+  const ahora = new Date();
+  await prisma.reserva.updateMany({
+    where: {
+      id_usuario,
+      estado: "confirmada",
+      fecha_fin: { lt: ahora },
+    },
+    data: { estado: "completada" },
+  });
+};
+
+const actualizarPaisesVisitados = async (id_reserva, id_usuario) => {
+  const reserva = await prisma.reserva.findUnique({
+    where: { id_reserva },
+    include: {
+      habitaciones: {
+        include: {
+          habitacion: {
+            include: {
+              hostal: {
+                include: {
+                  ciudad: {
+                    include: { pais: true },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  const codigo_pais =
+    reserva.habitaciones[0]?.habitacion?.hostal?.ciudad?.pais?.codigo_pais;
+  if (!codigo_pais) return;
+
+  const yaVisitado = await prisma.usuarioPaises.findUnique({
+    where: { id_usuario_codigo_pais: { id_usuario, codigo_pais } },
+  });
+
+  if (!yaVisitado) {
+    await prisma.usuarioPaises.create({
+      data: { id_usuario, codigo_pais, visitas: 1 },
+    });
+  }
+};
+
+// Services
 const createReserva = async (id_usuario, data) => {
   const { id_habitacion, fecha_inicio, fecha_fin, num_personas } = data;
 
@@ -76,6 +128,9 @@ const createReserva = async (id_usuario, data) => {
 };
 
 const getMyReservas = async (id_usuario) => {
+  // Primero marcar las que ya vencieron
+  await marcarCompletadas(id_usuario);
+
   return await prisma.reserva.findMany({
     where: { id_usuario },
     select: {
@@ -94,6 +149,7 @@ const getMyReservas = async (id_usuario) => {
               precio_base: true,
               hostal: {
                 select: {
+                  id_hostal: true,
                   nombre: true,
                   ciudad: { select: { nombre: true } },
                 },
@@ -104,6 +160,26 @@ const getMyReservas = async (id_usuario) => {
       },
     },
     orderBy: { fecha_reserva: "desc" },
+  });
+};
+
+const completarReserva = async (id_reserva, id_usuario) => {
+  const reserva = await prisma.reserva.findUnique({ where: { id_reserva } });
+
+  if (!reserva) throw new AppError("Reserva no encontrada", 404);
+  if (reserva.id_usuario !== id_usuario)
+    throw new AppError("No autorizado", 403);
+  if (reserva.estado === "completada")
+    throw new AppError("La reserva ya está completada", 400);
+  if (reserva.estado === "cancelada")
+    throw new AppError("No se puede completar una reserva cancelada", 400);
+  if (new Date(reserva.fecha_fin) > new Date())
+    throw new AppError("La reserva aún no ha finalizado", 400);
+
+  return await prisma.reserva.update({
+    where: { id_reserva },
+    data: { estado: "completada" },
+    select: { id_reserva: true, estado: true, total: true },
   });
 };
 
@@ -171,7 +247,7 @@ const confirmarReserva = async (id_reserva, id_usuario) => {
   if (reserva.estado === "cancelada")
     throw new AppError("No se puede confirmar una reserva cancelada", 400);
 
-  return await prisma.reserva.update({
+  const updated = await prisma.reserva.update({
     where: { id_reserva },
     data: { estado: "confirmada" },
     select: {
@@ -181,6 +257,12 @@ const confirmarReserva = async (id_reserva, id_usuario) => {
       fecha_reserva: true,
     },
   });
+
+  // Unirse a chats automáticamente
+  await unirseAChatsDeReserva(id_reserva, id_usuario);
+  await actualizarPaisesVisitados(id_reserva, id_usuario);
+
+  return updated;
 };
 
 module.exports = {
@@ -188,4 +270,5 @@ module.exports = {
   getMyReservas,
   getReservaById,
   confirmarReserva,
+  completarReserva,
 };

@@ -37,4 +37,23 @@ const getHostalById = async (req, res, next) => {
   }
 };
 
-module.exports = { getCities, getHostals, getTopHostals, getHostalById };
+const createReview = async (req, res, next) => {
+  try {
+    const review = await hostalService.createReview(
+      Number(req.params.id),
+      req.user.id,
+      req.body,
+    );
+    res.status(201).json({ status: "success", data: review });
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = {
+  getCities,
+  getHostals,
+  getTopHostals,
+  getHostalById,
+  createReview,
+};
