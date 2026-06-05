@@ -37,10 +37,11 @@ const getHostals = async ({ search, city } = {}) => {
         },
       },
       habitaciones: {
-        select: { id_habitacion: true, precio_base: true },
+        select: { precio_base: true },
         orderBy: { precio_base: "asc" },
         take: 1,
       },
+      _count: { select: { ratings: true } },
     },
     orderBy: { nombre: "asc" },
   });
@@ -53,9 +54,21 @@ const getTopHostals = async () => {
       nombre: true,
       descripcion: true,
       disponibilidad: true,
-      capacidad: true,
       promedio_rating: true,
       ciudad: { select: { id_ciudad: true, nombre: true } },
+      servicios: {
+        select: {
+          servicio: {
+            select: { id_servicio: true, nombre: true, icono: true },
+          },
+        },
+      },
+      habitaciones: {
+        select: { precio_base: true },
+        orderBy: { precio_base: "asc" },
+        take: 1,
+      },
+      _count: { select: { ratings: true } }, // 👈
     },
     orderBy: { promedio_rating: "desc" },
     take: 5,
@@ -116,4 +129,61 @@ const getHostalById = async (id) => {
   return hostal;
 };
 
-module.exports = { getCities, getHostals, getTopHostals, getHostalById };
+const createReview = async (
+  id_hostal,
+  id_usuario,
+  { puntuacion, contenido },
+) => {
+  const hostal = await prisma.hostal.findUnique({ where: { id_hostal } });
+  if (!hostal) throw new AppError("Hostal no encontrado", 404);
+
+  // Verificar reserva completada en este hostal
+  const reservaCompletada = await prisma.reserva.findFirst({
+    where: {
+      id_usuario,
+      estado: "completada",
+      habitaciones: {
+        some: { habitacion: { id_hostal } },
+      },
+    },
+  });
+  if (!reservaCompletada)
+    throw new AppError(
+      "Necesitas una reserva completada en este hostal para dejar una review",
+      403,
+    );
+
+  // Verificar si ya dejó una review
+  const reviewExistente = await prisma.ratingHostal.findUnique({
+    where: { id_hostal_id_usuario: { id_hostal, id_usuario } },
+  });
+  if (reviewExistente)
+    throw new AppError("Ya has dejado una review para este hostal", 400);
+
+  // Crear review
+  const review = await prisma.ratingHostal.create({
+    data: { id_hostal, id_usuario, puntuacion, contenido },
+  });
+
+  // Recalcular promedio
+  const ratings = await prisma.ratingHostal.findMany({
+    where: { id_hostal },
+    select: { puntuacion: true },
+  });
+  const promedio =
+    ratings.reduce((acc, r) => acc + r.puntuacion, 0) / ratings.length;
+  await prisma.hostal.update({
+    where: { id_hostal },
+    data: { promedio_rating: +promedio.toFixed(1) },
+  });
+
+  return review;
+};
+
+module.exports = {
+  getCities,
+  getHostals,
+  getTopHostals,
+  getHostalById,
+  createReview,
+};

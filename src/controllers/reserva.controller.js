@@ -18,6 +18,18 @@ const getMyReservas = async (req, res, next) => {
   }
 };
 
+const completarReserva = async (req, res, next) => {
+  try {
+    const reserva = await reservaService.completarReserva(
+      Number(req.params.id),
+      req.user.id,
+    );
+    res.json({ status: "success", data: reserva });
+  } catch (err) {
+    next(err);
+  }
+};
+
 const getReservaById = async (req, res, next) => {
   try {
     const reserva = await reservaService.getReservaById(
@@ -47,4 +59,5 @@ module.exports = {
   getMyReservas,
   getReservaById,
   confirmarReserva,
+  completarReserva,
 };
