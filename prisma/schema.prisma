@@ -29,6 +29,7 @@ model Usuario {
   paises_visitados UsuarioPaises[]
   ratings_hostales RatingHostal[]
   mensajes         Mensaje[]
+  rutas            Ruta[]
 
   @@map("usuarios")
 }
@@ -105,6 +106,7 @@ model Reserva {
   usuario       Usuario  @relation(fields: [id_usuario], references: [id_usuario])
   facturas      Factura[]
   habitaciones  ReservaHabitacion[]
+  ruta          Ruta?
 
   @@map("reservas")
 }
@@ -350,4 +352,18 @@ model UsuarioChat {
 
   @@id([id_usuario, id_chat])
   @@map("usuario_chat")
+}
+
+model Ruta {
+  id_ruta     Int      @id @default(autoincrement())
+  id_reserva  Int      @unique
+  id_usuario  Int
+  ciudad      String
+  paradas     Json
+  generada_en DateTime @default(now())
+
+  reserva     Reserva  @relation(fields: [id_reserva], references: [id_reserva])
+  usuario     Usuario  @relation(fields: [id_usuario], references: [id_usuario])
+
+  @@map("rutas")
 }

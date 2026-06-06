@@ -1,6 +1,7 @@
 const prisma = require("../config/prisma");
 const AppError = require("../utils/AppError");
 const { unirseAChatsDeReserva } = require("./chat.service");
+const { generateRuta } = require("./ruta.service");
 
 // Helpers
 const marcarCompletadas = async (id_usuario) => {
@@ -261,6 +262,7 @@ const confirmarReserva = async (id_reserva, id_usuario) => {
   // Unirse a chats automáticamente
   await unirseAChatsDeReserva(id_reserva, id_usuario);
   await actualizarPaisesVisitados(id_reserva, id_usuario);
+  await generateRuta(id_reserva, id_usuario);
 
   return updated;
 };
